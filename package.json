@@ -1,0 +1,15 @@
+{
+  "name": "pi-tool-compress",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Compact Pi tool-call and assistant rendering.",
+  "keywords": ["pi-package", "pi", "tools", "tui"],
+  "pi": {
+    "extensions": ["./index.js"]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/CorneliusTantius/pi-tool-compress.git"
+  },
+  "license": "MIT"
+}
