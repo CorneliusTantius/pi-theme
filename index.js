@@ -137,7 +137,7 @@ function padRight(line, width) {
 function assistantBubble(lines, width) {
   const theme = globalThis[PI_THEME];
   const innerWidth = Math.max(1, width - 2);
-  const paint = (line = "") => bg(theme, "userMessageBg", padRight(line, width));
+  const paint = (line = "") => bg(theme, "customMessageBg", padRight(line, width));
   return [
     ...lines.map((line) => paint(` ${truncateToWidth(line, innerWidth, "")}`)),
     paint(),
