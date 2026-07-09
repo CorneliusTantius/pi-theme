@@ -1,5 +1,5 @@
 import { AssistantMessageComponent, ToolExecutionComponent } from "@earendil-works/pi-coding-agent";
-import { Text, truncateToWidth } from "@earendil-works/pi-tui";
+import { Text, truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 
 const TOOL_PATCHED = Symbol.for("pi-theme:patched-tool-renderers");
 const ASSISTANT_PATCHED = Symbol.for("pi-theme:patched-assistant-bubble");
@@ -122,8 +122,27 @@ function hasAnsiCode(line, code) {
   return false;
 }
 
-function separator(width) {
-  return fg(globalThis[PI_THEME], "dim", truncateToWidth("─".repeat(width), width));
+function bg(theme, key, text) {
+  try {
+    return theme?.bg?.(key, text) ?? text;
+  } catch {
+    return text;
+  }
+}
+
+function padRight(line, width) {
+  return line + " ".repeat(Math.max(0, width - visibleWidth(line)));
+}
+
+function assistantBubble(lines, width) {
+  const theme = globalThis[PI_THEME];
+  const innerWidth = Math.max(1, width - 2);
+  const paint = (line = "") => bg(theme, "userMessageBg", padRight(line, width));
+  return [
+    paint(),
+    ...lines.map((line) => paint(` ${truncateToWidth(line, innerWidth, "")}`)),
+    paint(),
+  ];
 }
 
 function patchTools() {
@@ -166,7 +185,8 @@ function patchAssistant() {
   if (typeof originalRender !== "function") return;
 
   proto.render = function renderAssistantBubble(width) {
-    const renderWidth = hasThinkingContent(this) ? Math.max(1, width - PAD.length) : width;
+    const bubbleWidth = Math.max(1, width - 2);
+    const renderWidth = hasThinkingContent(this) ? Math.max(1, bubbleWidth - PAD.length) : bubbleWidth;
 
     if (this.hasToolCalls) {
       return originalRender.call(this, renderWidth).map((line) => truncateToWidth(padThinkingLine(line), width, ""));
@@ -175,9 +195,9 @@ function patchAssistant() {
     const lines = trimBlank(originalRender.call(this, renderWidth))
       .filter((line) => !isFence(line))
       .map(cleanAssistantLine)
-      .map((line) => truncateToWidth(line, width, ""));
+      .map((line) => truncateToWidth(line, bubbleWidth, ""));
 
-    return lines.length ? [...lines, separator(width)] : lines;
+    return lines.length ? assistantBubble(lines, width) : lines;
   };
 
   proto[ASSISTANT_PATCHED] = true;
