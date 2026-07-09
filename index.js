@@ -102,8 +102,16 @@ function isFence(line) {
 function cleanAssistantLine(line) {
   const plain = stripAnsi(line);
   const leading = plain.match(/^\s*/)?.[0].length ?? 0;
-  const cleaned = leading <= 3 ? trimLeft(line) : line;
-  return hasAnsiCode(cleaned, 3) ? PAD + cleaned : cleaned;
+  return padThinkingLine(leading <= 3 ? trimLeft(line) : line);
+}
+
+function padThinkingLine(line) {
+  const cleaned = trimLeft(line);
+  return isThinkingLine(cleaned) ? PAD + cleaned : line;
+}
+
+function isThinkingLine(line) {
+  return hasAnsiCode(line, 3) || Boolean(globalThis[PI_THEME]?.getFgAnsi?.("thinkingText") && line.includes(globalThis[PI_THEME].getFgAnsi("thinkingText")));
 }
 
 function hasAnsiCode(line, code) {
@@ -156,7 +164,7 @@ function patchAssistant() {
   if (typeof originalRender !== "function") return;
 
   proto.render = function renderAssistantBubble(width) {
-    if (this.hasToolCalls) return originalRender.call(this, width);
+    if (this.hasToolCalls) return originalRender.call(this, width).map(padThinkingLine);
 
     const contentWidth = Math.max(1, width - BUBBLE_PAD.length);
     const lines = trimBlank(originalRender.call(this, contentWidth))
