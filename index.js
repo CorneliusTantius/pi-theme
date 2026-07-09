@@ -15,12 +15,35 @@ function clip(value) {
 }
 
 function summarize(name, args = {}) {
-  if (name === "bash") return clip(args.command);
-  if (name === "read") return clip(args.path);
-  if (name === "grep") return clip([args.pattern && `"${args.pattern}"`, args.path && `in ${args.path}`].filter(Boolean).join(" "));
-  if (name === "find") return clip([args.pattern || "*", args.path && `in ${args.path}`].filter(Boolean).join(" "));
-  if (name === "ls") return clip(args.path || ".");
-  return clip(args.path || args.file_path || args.url || "");
+  const tool = String(name || "").split(".").pop();
+  if (tool === "bash") return clip(args.command);
+  if (tool === "read") return clip(args.path);
+  if (tool === "write") return clip(args.path);
+  if (tool === "edit") return clip(`${args.path || ""}${Array.isArray(args.edits) ? ` (${args.edits.length} edits)` : ""}`);
+  if (tool === "grep") return clip([args.pattern && `"${args.pattern}"`, args.path && `in ${args.path}`].filter(Boolean).join(" "));
+  if (tool === "find") return clip([args.pattern || "*", args.path && `in ${args.path}`].filter(Boolean).join(" "));
+  if (tool === "ls") return clip(args.path || ".");
+  if (tool === "agent_browser") return summarizeBrowser(args);
+  if (tool === "parallel") return summarizeParallel(args);
+  return clip(args.path || args.file_path || args.url || args.command || "");
+}
+
+function summarizeBrowser(args = {}) {
+  if (Array.isArray(args.args)) return clip(args.args.join(" "));
+  if (args.semanticAction) return clip(Object.values(args.semanticAction).filter((v) => typeof v === "string").join(" "));
+  if (args.job?.steps) return clip(`job ${args.job.steps.length} steps`);
+  if (args.qa?.url) return clip(`qa ${args.qa.url}`);
+  if (args.qa?.attached) return "qa attached";
+  if (args.electron) return clip(`electron ${args.electron.action || ""} ${args.electron.appName || args.electron.bundleId || args.electron.appPath || ""}`);
+  if (args.sourceLookup) return clip(`source ${args.sourceLookup.componentName || args.sourceLookup.selector || "lookup"}`);
+  if (args.networkSourceLookup) return clip(`network ${args.networkSourceLookup.url || args.networkSourceLookup.filter || "lookup"}`);
+  return "";
+}
+
+function summarizeParallel(args = {}) {
+  const uses = args.tool_uses;
+  if (!Array.isArray(uses)) return "";
+  return clip(`${uses.length} tools: ${uses.map((use) => use.recipient_name || use.name || "tool").join(", ")}`);
 }
 
 function setBg(theme, key, value) {
