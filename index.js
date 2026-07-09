@@ -139,10 +139,14 @@ function assistantBubble(lines, width) {
   const innerWidth = Math.max(1, width - 2);
   const paint = (line = "") => bg(theme, "userMessageBg", padRight(line, width));
   return [
-    paint(),
     ...lines.map((line) => paint(` ${truncateToWidth(line, innerWidth, "")}`)),
     paint(),
   ];
+}
+
+function splitLeadingThinking(lines) {
+  const firstResponse = lines.findIndex((line) => stripAnsi(line).trim() && !isThinkingLine(trimLeft(line)));
+  return firstResponse > 0 ? [lines.slice(0, firstResponse), lines.slice(firstResponse)] : [[], lines];
 }
 
 function patchTools() {
@@ -197,7 +201,9 @@ function patchAssistant() {
       .map(cleanAssistantLine)
       .map((line) => truncateToWidth(line, bubbleWidth, ""));
 
-    return lines.length ? assistantBubble(lines, width) : lines;
+    if (!lines.length) return lines;
+    const [thinkingLines, responseLines] = splitLeadingThinking(lines);
+    return responseLines.length ? [...thinkingLines, "", ...assistantBubble(responseLines, width)] : thinkingLines;
   };
 
   proto[ASSISTANT_PATCHED] = true;
