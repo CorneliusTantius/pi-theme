@@ -173,7 +173,7 @@ function patchAssistant() {
   if (typeof originalRender !== "function") return;
 
   proto.render = function renderAssistantBubble(width) {
-    if (this.hasToolCalls) return originalRender.call(this, width).map(padThinkingLine);
+    if (this.hasToolCalls) return originalRender.call(this, width).map((line) => truncateToWidth(padThinkingLine(line), width));
 
     const contentWidth = Math.max(1, width - BUBBLE_PAD.length);
     const lines = trimBlank(originalRender.call(this, contentWidth))
