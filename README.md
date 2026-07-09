@@ -26,7 +26,7 @@ git:github.com/CorneliusTantius/pi-theme
 
 ## What it changes
 
-- Tool calls render as compact summaries.
+- Tool calls render as compact summaries with status icons: `›` running, `✓` success, `✗` error.
 - Common tools get better labels: `bash`, `read`, `write`, `edit`, browser, and parallel tool calls.
 - Tool results are hidden in the TUI.
 - Assistant messages lose extra fences/spacing and get a subtle separator.

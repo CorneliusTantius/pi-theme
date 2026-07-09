@@ -70,7 +70,13 @@ function dim(text) {
 function view(theme, name, value, status) {
   removeToolBackground(theme);
   const color = status === "error" ? "error" : status === "running" ? "warning" : "success";
-  return new Text(`${fg(theme, color, name)}${value ? ` ${fg(theme, "dim", value)}` : ""}`, 0, 0);
+  const icon = status === "error" ? "✗" : status === "running" ? "›" : "✓";
+  return new Text(`${fg(theme, color, icon)} ${fg(theme, color, name)}${value ? ` ${fg(theme, "dim", value)}` : ""}`, 0, 0);
+}
+
+function statusFromContext(context) {
+  if (context?.isError) return "error";
+  return context?.isPartial === false ? "success" : "running";
 }
 
 function trimBlank(lines) {
@@ -116,7 +122,7 @@ function patchTools() {
   };
 
   proto.getCallRenderer = function getCallRenderer() {
-    return (args, theme) => view(theme, this.toolName, summarize(this.toolName, args), "running");
+    return (args, theme, context) => view(theme, this.toolName, summarize(this.toolName, args), statusFromContext(context));
   };
 
   proto.getResultRenderer = function getResultRenderer() {
