@@ -31,3 +31,4 @@ git:github.com/CorneliusTantius/pi-theme
 - Tool results are hidden in the TUI.
 - Final assistant messages render in a compact background bubble distinct from prompt bubbles.
 - Thinking lines are padded to align with compact tool output.
+- Footer context usage is shown as a compact percent bar.

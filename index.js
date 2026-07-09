@@ -1,8 +1,9 @@
-import { AssistantMessageComponent, ToolExecutionComponent } from "@earendil-works/pi-coding-agent";
+import { AssistantMessageComponent, FooterComponent, ToolExecutionComponent } from "@earendil-works/pi-coding-agent";
 import { Text, truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 
 const TOOL_PATCHED = Symbol.for("pi-theme:patched-tool-renderers");
 const ASSISTANT_PATCHED = Symbol.for("pi-theme:patched-assistant-bubble");
+const FOOTER_PATCHED = Symbol.for("pi-theme:patched-footer");
 const PI_THEME = Symbol.for("@earendil-works/pi-coding-agent:theme");
 const ANSI_RE = /\x1b\[[0-9;]*m/g;
 const MAX = 90;
@@ -181,6 +182,53 @@ function hasThinkingContent(component) {
   return component?.lastMessage?.content?.some((item) => item?.type === "thinking" && item?.thinking?.trim());
 }
 
+function formatTokens(count) {
+  if (count < 1000) return String(count);
+  if (count < 10000) return `${(count / 1000).toFixed(1)}k`;
+  if (count < 1000000) return `${Math.round(count / 1000)}k`;
+  return `${(count / 1000000).toFixed(count < 10000000 ? 1 : 0)}M`;
+}
+
+function usageStats(session) {
+  let input = 0;
+  let output = 0;
+  let cost = 0;
+  for (const entry of session.sessionManager.getEntries()) {
+    const usage = entry?.type === "message" && entry.message?.role === "assistant" && entry.message.usage;
+    if (!usage) continue;
+    input += usage.input || 0;
+    output += usage.output || 0;
+    cost += usage.cost?.total || 0;
+  }
+  return [input && `↑${formatTokens(input)}`, output && `↓${formatTokens(output)}`, cost && `$${cost.toFixed(3)}`].filter(Boolean).join(" ");
+}
+
+function contextBar(session) {
+  const theme = globalThis[PI_THEME];
+  const usage = session.getContextUsage?.();
+  const percent = usage?.percent ?? 0;
+  const known = usage?.percent !== null && usage?.percent !== undefined;
+  const width = 10;
+  const used = known ? Math.round((Math.max(0, Math.min(100, percent)) / 100) * width) : 0;
+  const color = percent > 90 ? "error" : percent > 70 ? "warning" : "success";
+  const bar = `${fg(theme, color, "█".repeat(used))}${fg(theme, "dim", "░".repeat(width - used))}`;
+  return `ctx ${fg(theme, "dim", "[")}${bar}${fg(theme, "dim", "]")} ${known ? `${percent.toFixed(1)}%` : "?%"}`;
+}
+
+function modelLabel(session) {
+  const state = session.state;
+  const model = state.model?.id || "no-model";
+  return state.model?.reasoning && state.thinkingLevel && state.thinkingLevel !== "off" ? `${model} • ${state.thinkingLevel}` : model;
+}
+
+function footerStatsLine(session, width) {
+  const left = [usageStats(session), contextBar(session)].filter(Boolean).join(" ");
+  const right = modelLabel(session);
+  const room = width - visibleWidth(left) - visibleWidth(right);
+  if (room >= 2) return fg(globalThis[PI_THEME], "dim", left + " ".repeat(room) + right);
+  return fg(globalThis[PI_THEME], "dim", truncateToWidth(`${left} ${right}`, width, ""));
+}
+
 function patchAssistant() {
   const proto = AssistantMessageComponent?.prototype;
   if (!proto || proto[ASSISTANT_PATCHED]) return;
@@ -209,7 +257,28 @@ function patchAssistant() {
   proto[ASSISTANT_PATCHED] = true;
 }
 
+function patchFooter() {
+  const proto = FooterComponent?.prototype;
+  if (!proto || proto[FOOTER_PATCHED]) return;
+
+  const originalRender = proto.render;
+  if (typeof originalRender !== "function") return;
+
+  proto.render = function renderPiThemeFooter(width) {
+    const lines = originalRender.call(this, width);
+    try {
+      if (lines.length > 1) lines[1] = truncateToWidth(footerStatsLine(this.session, width), width, "");
+    } catch {
+      return lines;
+    }
+    return lines;
+  };
+
+  proto[FOOTER_PATCHED] = true;
+}
+
 export default function piTheme() {
   patchTools();
   patchAssistant();
+  patchFooter();
 }
