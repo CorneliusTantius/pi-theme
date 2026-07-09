@@ -154,6 +154,10 @@ function patchTools() {
   proto[TOOL_PATCHED] = true;
 }
 
+function hasThinkingContent(component) {
+  return component?.lastMessage?.content?.some((item) => item?.type === "thinking" && item?.thinking?.trim());
+}
+
 function patchAssistant() {
   const proto = AssistantMessageComponent?.prototype;
   if (!proto || proto[ASSISTANT_PATCHED]) return;
@@ -162,11 +166,13 @@ function patchAssistant() {
   if (typeof originalRender !== "function") return;
 
   proto.render = function renderAssistantBubble(width) {
+    const renderWidth = hasThinkingContent(this) ? Math.max(1, width - PAD.length) : width;
+
     if (this.hasToolCalls) {
-      return originalRender.call(this, width).map((line) => truncateToWidth(padThinkingLine(line), width, ""));
+      return originalRender.call(this, renderWidth).map((line) => truncateToWidth(padThinkingLine(line), width, ""));
     }
 
-    const lines = trimBlank(originalRender.call(this, width))
+    const lines = trimBlank(originalRender.call(this, renderWidth))
       .filter((line) => !isFence(line))
       .map(cleanAssistantLine)
       .map((line) => truncateToWidth(line, width, ""));
