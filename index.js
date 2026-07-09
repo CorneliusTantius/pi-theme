@@ -1,8 +1,8 @@
 import { AssistantMessageComponent, ToolExecutionComponent } from "@earendil-works/pi-coding-agent";
 import { Text, truncateToWidth } from "@earendil-works/pi-tui";
 
-const TOOL_PATCHED = Symbol.for("pi-tool-compress:patched-tool-renderers");
-const ASSISTANT_PATCHED = Symbol.for("pi-tool-compress:patched-assistant-bubble");
+const TOOL_PATCHED = Symbol.for("pi-theme:patched-tool-renderers");
+const ASSISTANT_PATCHED = Symbol.for("pi-theme:patched-assistant-bubble");
 const MAX = 90;
 const PAD = "      ";
 const BUBBLE_PAD = "";
@@ -139,7 +139,7 @@ function patchAssistant() {
   proto[ASSISTANT_PATCHED] = true;
 }
 
-export default function piToolCompress() {
+export default function piTheme() {
   patchTools();
   patchAssistant();
 }

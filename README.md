@@ -1,11 +1,11 @@
-# pi-tool-compress
+# pi-theme
 
 Pi extension that compresses noisy tool-call UI into short one-line summaries and removes extra assistant bubble chrome.
 
 ## Install
 
 ```sh
-pi install git:github.com/CorneliusTantius/pi-tool-compress
+pi install git:github.com/CorneliusTantius/pi-theme
 ```
 
 ## What it changes

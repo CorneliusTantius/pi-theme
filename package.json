@@ -1,15 +1,15 @@
 {
-  "name": "pi-tool-compress",
+  "name": "pi-theme",
   "version": "0.1.0",
   "type": "module",
-  "description": "Compact Pi tool-call and assistant rendering.",
+  "description": "Compact Pi TUI theme: short tool calls and minimal assistant bubbles.",
   "keywords": ["pi-package", "pi", "tools", "tui"],
   "pi": {
     "extensions": ["./index.js"]
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/CorneliusTantius/pi-tool-compress.git"
+    "url": "https://github.com/CorneliusTantius/pi-theme.git"
   },
   "license": "MIT"
 }
