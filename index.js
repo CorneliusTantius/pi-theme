@@ -6,7 +6,7 @@ const ASSISTANT_PATCHED = Symbol.for("pi-theme:patched-assistant-bubble");
 const PI_THEME = Symbol.for("@earendil-works/pi-coding-agent:theme");
 const ANSI_RE = /\x1b\[[0-9;]*m/g;
 const MAX = 90;
-const PAD = "      ";
+const PAD = "    ";
 const TRANSPARENT_BG = "\x1b[49m";
 const TOOL_BG_KEYS = ["toolPendingBg", "toolSuccessBg", "toolErrorBg"];
 
@@ -147,7 +147,7 @@ function patchTools() {
     proto.render = function renderCompactTool(width) {
       const innerWidth = Math.max(1, width - PAD.length);
       return trimBlank(originalRender.call(this, innerWidth))
-        .map((line) => PAD + truncateToWidth(trimLeft(line), innerWidth));
+        .map((line) => PAD + truncateToWidth(trimLeft(line), innerWidth, ""));
     };
   }
 
@@ -163,13 +163,13 @@ function patchAssistant() {
 
   proto.render = function renderAssistantBubble(width) {
     if (this.hasToolCalls) {
-      return originalRender.call(this, width).map((line) => truncateToWidth(padThinkingLine(line), width));
+      return originalRender.call(this, width).map((line) => truncateToWidth(padThinkingLine(line), width, ""));
     }
 
     const lines = trimBlank(originalRender.call(this, width))
       .filter((line) => !isFence(line))
       .map(cleanAssistantLine)
-      .map((line) => truncateToWidth(line, width));
+      .map((line) => truncateToWidth(line, width, ""));
 
     return lines.length ? [...lines, separator(width)] : lines;
   };
