@@ -4,8 +4,24 @@ Pi extension that compresses noisy tool-call UI into short one-line summaries an
 
 ## Install
 
+On any machine with Pi installed:
+
 ```sh
 pi install git:github.com/CorneliusTantius/pi-theme
+```
+
+Then restart Pi. The extension loads on startup.
+
+To verify:
+
+```sh
+pi list
+```
+
+You should see:
+
+```txt
+git:github.com/CorneliusTantius/pi-theme
 ```
 
 ## What it changes
