@@ -102,7 +102,15 @@ function isFence(line) {
 function cleanAssistantLine(line) {
   const plain = stripAnsi(line);
   const leading = plain.match(/^\s*/)?.[0].length ?? 0;
-  return leading <= 3 ? trimLeft(line) : line;
+  const cleaned = leading <= 3 ? trimLeft(line) : line;
+  return hasAnsiCode(cleaned, 3) ? PAD + cleaned : cleaned;
+}
+
+function hasAnsiCode(line, code) {
+  for (const match of line.matchAll(/\x1b\[([0-9;]*)m/g)) {
+    if (match[1].split(";").map(Number).includes(code)) return true;
+  }
+  return false;
 }
 
 function rule(width, label = "") {
