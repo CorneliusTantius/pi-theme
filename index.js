@@ -111,7 +111,16 @@ function padThinkingLine(line) {
 }
 
 function isThinkingLine(line) {
-  return hasAnsiCode(line, 3) || Boolean(globalThis[PI_THEME]?.getFgAnsi?.("thinkingText") && line.includes(globalThis[PI_THEME].getFgAnsi("thinkingText")));
+  return hasAnsiCode(line, 3) || hasThinkingColor(line);
+}
+
+function hasThinkingColor(line) {
+  try {
+    const ansi = globalThis[PI_THEME]?.getFgAnsi?.("thinkingText");
+    return Boolean(ansi && line.includes(ansi));
+  } catch {
+    return false;
+  }
 }
 
 function hasAnsiCode(line, code) {
