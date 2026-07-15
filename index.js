@@ -5,6 +5,7 @@ const TOOL_PATCHED = Symbol.for("pi-theme:patched-tool-renderers");
 const ASSISTANT_PATCHED = Symbol.for("pi-theme:patched-assistant-bubble");
 const FOOTER_PATCHED = Symbol.for("pi-theme:patched-footer");
 const STATUS_PATCHED = Symbol.for("pi-theme:patched-status");
+const CHAT_PATCHED = Symbol.for("pi-theme:patched-chat-limit");
 const INPUT_PATCHED = Symbol.for("pi-theme:patched-input");
 const USER_PATCHED = Symbol.for("pi-theme:patched-user-message");
 const PI_THEME = Symbol.for("@earendil-works/pi-coding-agent:theme");
@@ -12,6 +13,7 @@ const ANSI_RE = /\x1b\[[0-9;]*m/g;
 const ANSI_CODE_RE = /\x1b\[([0-9;]*)m/g;
 const OSC_RE = /\x1b\][^\x07]*(?:\x07|\x1b\\)/g;
 const MAX = 90;
+const CHAT_CHILD_LIMIT = 120;
 const PAD = "  ";
 const TOOL_BG_KEYS = ["toolPendingBg", "toolSuccessBg", "toolErrorBg"];
 const OSC133_ZONE_START = "\x1b]133;A\x07";
@@ -302,6 +304,43 @@ function subtleFooterStatus(line, width) {
   return fg(globalThis[PI_THEME], "dim", truncateToWidth(text, width, ""));
 }
 
+function capChatContainer(chat) {
+  if (!chat || chat[CHAT_PATCHED] || typeof chat.render !== "function") return;
+  const originalRender = chat.render;
+
+  chat.render = function renderCappedChat(width) {
+    try {
+      if (!Array.isArray(this.children) || this.children.length <= CHAT_CHILD_LIMIT) return originalRender.call(this, width);
+      const children = this.children;
+      const hidden = children.length - CHAT_CHILD_LIMIT;
+      this.children = children.slice(-CHAT_CHILD_LIMIT);
+      try {
+        const notice = fg(globalThis[PI_THEME], "dim", truncateToWidth(`… ${hidden} older chat items hidden for typing speed`, width, ""));
+        return [notice, ...originalRender.call(this, width)];
+      } finally {
+        this.children = children;
+      }
+    } catch {
+      return fallbackRender(originalRender, this, width);
+    }
+  };
+
+  chat[CHAT_PATCHED] = true;
+}
+
+function patchChatLimit() {
+  const proto = InteractiveMode?.prototype;
+  if (!proto || proto[CHAT_PATCHED] || typeof proto.init !== "function") return;
+
+  const originalInit = proto.init;
+  proto.init = async function initWithCappedChat(...args) {
+    capChatContainer(this.chatContainer);
+    return originalInit.apply(this, args);
+  };
+
+  proto[CHAT_PATCHED] = true;
+}
+
 function patchRtkStatus() {
   const proto = InteractiveMode?.prototype;
   if (!proto || proto[STATUS_PATCHED] || typeof proto.showStatus !== "function") return;
@@ -443,5 +482,5 @@ function patchFooter() {
 }
 
 export default function piTheme() {
-  [patchTools, patchAssistant, patchInput, patchUserMessages, patchRtkStatus, patchFooter].forEach(safePatch);
+  [patchChatLimit, patchTools, patchAssistant, patchInput, patchUserMessages, patchRtkStatus, patchFooter].forEach(safePatch);
 }
