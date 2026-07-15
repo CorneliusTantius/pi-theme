@@ -16,6 +16,7 @@ const MAX = 90;
 const CHAT_CHILD_LIMIT = 99;
 const PAD = "  ";
 const TOOL_BG_KEYS = ["toolPendingBg", "toolSuccessBg", "toolErrorBg"];
+let showFullChat = false;
 const OSC133_ZONE_START = "\x1b]133;A\x07";
 const OSC133_ZONE_END = "\x1b]133;B\x07";
 const OSC133_ZONE_FINAL = "\x1b]133;C\x07";
@@ -310,7 +311,7 @@ function capChatContainer(chat) {
 
   chat.render = function renderCappedChat(width) {
     try {
-      if (!Array.isArray(this.children) || this.children.length <= CHAT_CHILD_LIMIT) return originalRender.call(this, width);
+      if (showFullChat || !Array.isArray(this.children) || this.children.length <= CHAT_CHILD_LIMIT) return originalRender.call(this, width);
       const children = this.children;
       const hidden = children.length - CHAT_CHILD_LIMIT;
       this.children = children.slice(-CHAT_CHILD_LIMIT);
@@ -339,6 +340,16 @@ function patchChatLimit() {
   };
 
   proto[CHAT_PATCHED] = true;
+}
+
+function registerChatToggle(pi) {
+  pi?.registerCommand?.("theme-history", {
+    description: "Toggle hidden older chat items in the TUI",
+    handler: async (_args, ctx) => {
+      showFullChat = !showFullChat;
+      ctx.ui.notify(showFullChat ? "pi-theme: showing full chat history" : `pi-theme: hiding older chat items after ${CHAT_CHILD_LIMIT}`, "info");
+    },
+  });
 }
 
 function patchRtkStatus() {
@@ -481,6 +492,7 @@ function patchFooter() {
   proto[FOOTER_PATCHED] = true;
 }
 
-export default function piTheme() {
+export default function piTheme(pi) {
   [patchChatLimit, patchTools, patchAssistant, patchInput, patchUserMessages, patchRtkStatus, patchFooter].forEach(safePatch);
+  safePatch(() => registerChatToggle(pi));
 }
