@@ -3,13 +3,27 @@
   "version": "0.1.0",
   "type": "module",
   "description": "Compact Pi TUI theme: short tool calls and minimal assistant bubbles.",
-  "keywords": ["pi-package", "pi", "tools", "tui"],
+  "keywords": [
+    "pi-package",
+    "pi",
+    "tools",
+    "tui"
+  ],
   "pi": {
-    "extensions": ["./index.js"]
+    "extensions": [
+      "./index.ts"
+    ]
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/CorneliusTantius/pi-theme.git"
+  },
+  "dependencies": {
+    "@earendil-works/pi-coding-agent": "^0.81.1",
+    "@earendil-works/pi-tui": "^0.81.1"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2"
   },
   "license": "MIT"
 }
